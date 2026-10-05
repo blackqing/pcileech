@@ -11,7 +11,7 @@
 // (c) Ulf Frisk, 2018-2026
 // Author: Ulf Frisk, pcileech@frizk.net
 //
-// Header Version: 5.17
+// Header Version: 5.18.10
 //
 
 #include "leechcore.h"
@@ -62,6 +62,7 @@ typedef const uint16_t                      *LPCWSTR;
 #define _Out_
 #define _Out_opt_
 #define _Out_writes_(x)
+#define _Out_writes_bytes_(x)
 #define _Out_writes_bytes_opt_(x)
 #define _Out_writes_opt_(x)
 #define _Out_writes_to_(x,y)
@@ -927,6 +928,41 @@ BOOL VMMDLL_MemWrite(_In_ VMM_HANDLE hVMM, _In_ DWORD dwPID, _In_ ULONG64 qwA, _
 */
 EXPORTED_FUNCTION _Success_(return)
 BOOL VMMDLL_MemVirt2Phys(_In_ VMM_HANDLE hVMM, _In_ DWORD dwPID, _In_ ULONG64 qwVA, _Out_ PULONG64 pqwPA);
+
+/* ABI bitness stable re - implementation of the Win32 MEMORY_BASIC_INFORMATION structure. */
+typedef struct tdVMMDLL_MEMORY_BASIC_INFORMATION {
+    QWORD BaseAddress;
+    QWORD AllocationBase;
+    DWORD AllocationProtect;
+    WORD  PartitionId;
+    WORD  _Reserved1;
+    DWORD _Reserved2;
+    QWORD RegionSize;
+    DWORD State;
+    DWORD Protect;
+    DWORD Type;
+    DWORD _Reserved3;
+} VMMDLL_MEMORY_BASIC_INFORMATION, *PVMMDLL_MEMORY_BASIC_INFORMATION;
+
+/*
+* VirtualQuery(Ex) analogue to allow enumeration of memory ranges via the API
+* in a way that is similar to the Win32 API VirtualQuery(Ex). The parameters
+* are roughly equivalent to their Win32 counterparts.
+* -- hVMM
+* -- dwPID
+* -- lpAddress
+* -- lpBuffer
+* -- dwLength
+* -- return
+*/
+EXPORTED_FUNCTION _Success_(return != 0)
+SIZE_T VMMDLL_MemVirtualQuery(
+    _In_ VMM_HANDLE hVMM,
+    _In_ DWORD dwPID,
+    _In_ QWORD lpAddress,
+    _Out_writes_bytes_(dwLength) PVMMDLL_MEMORY_BASIC_INFORMATION lpBuffer,
+    _In_ SIZE_T dwLength
+);
 
 
 
@@ -2807,6 +2843,23 @@ BOOL VMMDLL_WinReg_EnumValueU(
 );
 
 /*
+* Retrieve the original UTF-8 name of a registry key or value.
+* -- uszFullPath = existing file-system path, including the value name if fValue.
+* -- fValue = TRUE for a value, FALSE for a key.
+* -- uszName = output buffer, or NULL to query the required size.
+* -- pcbName = buffer capacity on input.
+* -- return
+*/
+EXPORTED_FUNCTION _Success_(return)
+BOOL VMMDLL_WinReg_QueryNameOriginalU(
+    _In_ VMM_HANDLE hVMM,
+    _In_ LPCSTR uszFullPath,
+    _In_ BOOL fValue,
+    _Out_writes_opt_(*pcbName) LPSTR uszName,
+    _When_(uszName == NULL, _Out_) _When_(uszName != NULL, _Inout_) PDWORD pcbName
+);
+
+/*
 * Query a registry value given a registry key/value path - similar to WINAPI
 * function 'RegQueryValueEx'.
 * Please consult WINAPI function documentation for information.
@@ -2886,6 +2939,23 @@ BOOL VMMDLL_WinReg_EnumValueW(
     _Out_opt_ LPDWORD lpType,
     _Out_writes_opt_(*lpcbData) LPBYTE lpData,
     _Inout_opt_ LPDWORD lpcbData
+);
+
+/*
+* Retrieve the original UTF-16 name of a registry key or value.
+* -- wszFullPath = existing file-system path, including the value name if fValue.
+* -- fValue = TRUE for a value, FALSE for a key.
+* -- wszName = output buffer, or NULL to query the required size.
+* -- pcchName = buffer capacity on input.
+* -- return
+*/
+_Success_(return)
+BOOL VMMDLL_WinReg_QueryNameOriginalW(
+    _In_ VMM_HANDLE hVMM,
+    _In_ LPCWSTR wszFullPath,
+    _In_ BOOL fValue,
+    _Out_writes_opt_(*pcchName) LPWSTR wszName,
+    _When_(wszName == NULL, _Out_) _When_(wszName != NULL, _Inout_) PDWORD pcchName
 );
 
 /*

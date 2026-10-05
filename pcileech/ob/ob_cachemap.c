@@ -10,7 +10,7 @@
 // The map (ObCacheMap) is thread safe.
 // The ObCacheMap is an object manager object and must be DECREF'ed when required.
 //
-// (c) Ulf Frisk, 2020-2025
+// (c) Ulf Frisk, 2020-2026
 // Author: Ulf Frisk, pcileech@frizk.net
 //
 #include "ob.h"
@@ -142,6 +142,10 @@ BOOL _ObCacheMap_Push(_In_ POB_CACHEMAP pcm, _In_ QWORD qwKey, _In_ PVOID pvObje
     }
     // 3: add new object
     if(!(pe = LocalAlloc(0, sizeof(OB_CACHEMAPENTRY)))) { return FALSE; }
+    if(!ObMap_Push(pcm->pm, qwKey, pe)) {
+        LocalFree(pe);
+        return FALSE;
+    }
     if(pcm->fObjectsOb) { Ob_INCREF(pvObject); }
     pe->pvObject = pvObject;
     pe->qwContext = qwContextInitial;
@@ -153,7 +157,6 @@ BOOL _ObCacheMap_Push(_In_ POB_CACHEMAP pcm, _In_ QWORD qwKey, _In_ PVOID pvObje
     } else {
         pe->BLink = pe->FLink = pe;
     }
-    ObMap_Push(pcm->pm, qwKey, pe);
     pcm->AgeListHead = pe;
     pcm->c++;
     return TRUE;
@@ -230,7 +233,7 @@ VOID _ObCacheMap_ObCloseCallback(_In_ POB_CACHEMAP pObCacheMap)
 * -- H
 * -- cMaxEntries = max entries in the cache, if more entries are added the
 *       least recently accessed item will be removed from the cache map.
-* -- pfnValidEntry = optional validation callback function.
+* -- pfnValidEntry = optional validation callback function (if any). NB! Must never call back into the ObCacheMap as this may cause a deadlock.
 * -- flags = defined by OB_CACHEMAP_FLAGS_*
 * -- return
 */

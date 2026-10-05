@@ -9,7 +9,7 @@
 // iterations of the set with ObSet_Get/ObSet_GetNext may fail.
 // The ObSet is an object manager object and must be DECREF'ed when required.
 //
-// (c) Ulf Frisk, 2019-2025
+// (c) Ulf Frisk, 2019-2026
 // Author: Ulf Frisk, pcileech@frizk.net
 //
 #include "ob.h"
@@ -464,6 +464,7 @@ _Success_(return)
 BOOL _ObSet_PushSet(_In_ POB_SET pvs, _In_opt_ POB_SET pvsSrc)
 {
     DWORD iValue;
+    if(pvs == pvsSrc) { return FALSE; }
     if(pvsSrc) {
         AcquireSRWLockShared(&pvsSrc->LockSRW);
         for(iValue = pvsSrc->c - 1; iValue; iValue--) {
@@ -536,12 +537,14 @@ BOOL ObSet_PushData(_In_opt_ POB_SET pvs, _In_opt_ POB_DATA pDataSrc)
 */
 VOID ObSet_Push_PageAlign(_In_opt_ POB_SET pvs, _In_ QWORD a, _In_ DWORD cb)
 {
-    QWORD qwA;
-    if(!OB_SET_IS_VALID(pvs)) { return; }
+    QWORD qwA, qwEnd;
+    if(!OB_SET_IS_VALID(pvs) || (a > (QWORD)-1 - cb)) { return; }
     qwA = a & ~0xfff;
     if(qwA == 0xfffffffffffff000) { return; }
-    while(qwA < a + cb) {
+    qwEnd = a + cb;
+    while(qwA < qwEnd) {
         ObSet_Push(pvs, qwA);
+        if(qwA == 0xfffffffffffff000) { break; }
         qwA += 0x1000;
     }
 }

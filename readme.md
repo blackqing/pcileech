@@ -291,7 +291,8 @@ v4.1
 * Linux clang compilation support.
 * macOS support.
 
-Latest:
+[v4.20](https://github.com/ufrisk/pcileech/releases/tag/v4.20)
+* Support for Windows 11 26H2.
 * Bug fixes.
 * Linux LeechAgent support using gRPC (LeechCore v2.21).
 * Add: `-no-kmd-mem` option to optionally disable KMD memory access when KMD is loaded (may be useful for stability reasons in some cases).

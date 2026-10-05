@@ -21,6 +21,7 @@
     <RemoteDebuggerCommandArguments>pcileech -device fpga -v  -vv -vvv -min 0x1000 display</RemoteDebuggerCommandArguments>
     <RemoteDebuggerWorkingDirectory>\\ad.frizk.net\data\dev-pcileech\bin\</RemoteDebuggerWorkingDirectory>
     <RemoteDebuggerServerName>WORKSTATION.ad.frizk.net</RemoteDebuggerServerName>
+    <RemoteDebuggerCommandArgumentsHistory>pcileech -device fpga -v  -vv -vvv -min 0x1000 display|</RemoteDebuggerCommandArgumentsHistory>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <DebuggerFlavor>WindowsRemoteDebugger</DebuggerFlavor>
